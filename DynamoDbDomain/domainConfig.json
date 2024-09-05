@@ -1,0 +1,38 @@
+{
+    "Items": [
+        {
+            "hash_key": {
+                "S": "DomainConfig.safetyplus.apps.dev.laika.forwoodsafety.com/"
+            },
+            "value": {
+                "M": {
+                    "ApplicationName": {
+                        "S": "safetyplus"
+                    },
+                    "replacements": {
+                        "L": [
+                            {
+                                "S": "${favicon_bpath},g/tipotapp/safetyplus/public/uploads/assets/images/favicon.ico?tipo_version_stamp=727965c31.1.0.1122334455"
+                            },
+                            {
+                                "S": "${themes_bpath},g/tipotapp/safetyplus/public/app/assets/styles/theme.css?tipo_version_stamp=727965c31.1.0.1122334455"
+                            }
+                        ]
+                    },
+                    "ApplicationOwnerAccountName": {
+                        "S": "tipotapp"
+                    },
+                    "Application": {
+                        "S": "0443429762"
+                    },
+                    "ApplicationOwnerAccount": {
+                        "S": "2000000001"
+                    }
+                }
+            }
+        }
+    ],
+    "Count": 1,
+    "ScannedCount": 1,
+    "ConsumedCapacity": null
+}

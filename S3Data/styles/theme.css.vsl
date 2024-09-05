@@ -1,0 +1,3 @@
+#if ($tipo_customization.theme_css)
+	$tipo_customization.theme_css
+#end
