@@ -1431,6 +1431,7 @@ if (document.querySelector('.risk-overview .ng-value-container') && (data_handle
 }
 
  tipoCustomScript.RiskChecklist_OnView  = function(data_handle) {
+    console.log('test offline development')
 if(data_handle.mode === "create") {
 let cdate = new Date();
 let dt = cdate.toISOString();
