@@ -8199,6 +8199,509 @@ console.log('data');
 }
 
 //___RootCauseAnalysis___
+//___ActionPlan___
+
+ tipoCustomScript.ActionPlan_goto_parent = function(data_handle) {
+console.log(data_handle);
+
+if(data_handle.tipo.parent_tipo_id && data_handle.tipo.parent_tipo_name) {
+    tipoHandle.toTipo('view', data_handle.tipo.parent_tipo_name, data_handle.tipo.parent_tipo_id);
+}
+else {
+    tipoHandle.toTipo('view', data_handle.tipo.verification_tipo_id_labels, data_handle.tipo.verification_tipo_id);
+}
+return true;
+}
+
+
+ tipoCustomScript.ActionPlan_complete_action = function(data_handle) {
+// function htmlencode(str) {
+//     var buf = [];
+//     for (var i = str.length - 1; i >= 0; i--) {
+//         buf.unshift(['&#', str[i].charCodeAt(), ';'].join(''));
+//     }
+//     return buf.join('');
+// }
+const now = new Date(tipoHandle.getDateUtil().utc().format()).toISOString();
+const time = tipoHandle.getDateUtil().utc().format('HH.mm.sss');
+const timearray = time.split('.');
+const dtnumber = (+timearray[0] * 3600) + (+timearray[1] * 60);
+data_handle.tipo.complete_date = now;
+data_handle.tipo.complete_date_dtnumber = dtnumber;
+data_handle.tipo.completeactionbuttonclick = true;
+if (tipoHandle.user_meta.user_attributes.user.locale === 'en') {
+    data_handle.tipo.status_ap = 'Complete';
+} else {
+    data_handle.tipo.status_ap = 'Πλήρης';
+}
+data_handle.tipo.status_ap___token = 'TT___COMPLETE';
+tipoHandle.updateTipo('ActionPlan', data_handle.tipo.tipo_id, data_handle.tipo).then((res) => {
+    if (res) {
+        setTimeout(() => {
+            tipoHandle.showMessage(tipoHandle.getInstantTranslation('TT___ACTION_COMPLETED'), '');
+            data_handle.formControl.get('status_ap___token').setValue('TT___COMPLETE');
+            if (tipoHandle.user_meta.user_attributes.user.locale === 'en') {
+                data_handle.formControl.get('status_ap').setValue('Complete');
+            } else {
+                data_handle.formControl.get('status_ap').setValue('Πλήρης');
+            }
+            tipoHandle.getTipo('ActionPlan', data_handle.tipo.tipo_id);
+        }, 1000);
+    }
+});
+
+
+
+// if (tipoHandle.tipoInternalHandleService.isOnline) {
+    if (data_handle.tipo.parent_tipo_name === 'CreateIncident') {
+        tipoHandle.getTipo(data_handle.tipo.parent_tipo_name, data_handle.tipo.parent_tipo_id).then((result) => {
+            if (result.incident_action.length > 0) {
+                let action_ids = _.map(result.incident_action, 'action_plan');
+                let query_params = { tipo_filter: `tipo_id:${action_ids.join(' OR ')}` }
+                tipoHandle.getTipos('ActionPlan', query_params, true).then((res) => {
+                    result.overview_total_actions = result.incident_action.length;
+                    let actionPlans = res.filter(item => result.incident_action.some(itemToBeRemoved => itemToBeRemoved.action_plan === item.tipo_id))
+                    result.overview_outstanding_actions = actionPlans.filter(t => t && t.status_ap___token === 'TT___INCOMPLETE').length;
+                    result.completed_actions = result.overview_total_actions - result.overview_outstanding_actions;;
+                    tipoHandle.updateTipo(result.tipo_name, result.tipo_id, result);
+                })
+            }
+        })
+    }
+
+    if (data_handle.tipo.parent_tipo_name === 'Meeting') {
+        tipoHandle.getTipo(data_handle.tipo.parent_tipo_name, data_handle.tipo.parent_tipo_id).then((result) => {
+            if (result.incident_action.length > 0) {
+                let action_ids = _.map(result.incident_action, 'action_plan');
+                let query_params = { tipo_filter: `tipo_id:${action_ids.join(' OR ')}` }
+                tipoHandle.getTipos('ActionPlan', query_params, true).then((res) => {
+                    result.safety_meetings.meeting_total_actions = result.incident_action.length;
+                    let actionPlans = res.filter(item => result.incident_action.some(itemToBeRemoved => itemToBeRemoved.action_plan === item.tipo_id))
+                    result.safety_meetings.meeting_outstanding_actions = actionPlans.filter(t => t && t.status_ap___token === 'TT___INCOMPLETE').length;
+                    result.safety_meetings.meeting_completed_actions = actionPlans.filter(t => t && t.status_ap___token === 'TT___COMPLETE').length;
+                    tipoHandle.updateTipo(result.tipo_name, result.tipo_id, result);
+                })
+            }
+        })
+    }
+
+    if (data_handle.tipo.parent_tipo_name === 'SafetyConversations') {
+        tipoHandle.getTipo(data_handle.tipo.parent_tipo_name, data_handle.tipo.parent_tipo_id).then((result) => {
+            if (result.incident_action.length > 0) {
+                let action_ids = _.map(result.incident_action, 'action_plan');
+                let query_params = { tipo_filter: `tipo_id:${action_ids.join(' OR ')}` }
+                tipoHandle.getTipos('ActionPlan', query_params, true).then((res) => {
+                    result.safety_conversations.conversation_total_actions = result.incident_action.length;
+                    let actionPlans = res.filter(item => result.incident_action.some(itemToBeRemoved => itemToBeRemoved.action_plan === item.tipo_id))
+                    result.safety_conversations.conversation_outstanding_actions = actionPlans.filter(t => t && t.status_ap___token === 'TT___INCOMPLETE').length;
+                    result.safety_conversations.conversation_completed_actions = actionPlans.filter(t => t && t.status_ap___token === 'TT___COMPLETE').length;
+                    tipoHandle.updateTipo(result.tipo_name, result.tipo_id, result);
+                })
+            }
+        })
+    }
+
+// }
+return true;
+}
+
+
+ tipoCustomScript.ActionPlan_action_class_OnChange  = function(data_handle) {
+data_handle.tipo.verification_tipo_id_labels = tipoHandle.tipoInternalHandleService.getCurrentState().tipo_name;
+data_handle.formControl.get('verification_tipo_id_labels').setValue(tipoHandle.tipoInternalHandleService.getCurrentState().tipo_name);
+data_handle.tipo.verification_tipo_id = tipoHandle.tipoInternalHandleService.getCurrentState().tipo_id;
+data_handle.formControl.get('verification_tipo_id').setValue(tipoHandle.tipoInternalHandleService.getCurrentState().tipo_id);
+
+if(data_handle.tipo.action_class___token === 'TT___FIXED_IN_FIELD') {
+    data_handle.tipo.status_ap___token = 'TT___COMPLETE';
+    data_handle.tipo.status_ap = (tipoHandle.user_meta.user_attributes.user.locale === 'en') ? 'Complete' : 'Πλήρης';
+    data_handle.formControl.get('status_ap___token').setValue('TT___COMPLETE');
+    data_handle.tipo.complete_date = new Date(tipoHandle.getDateUtil().utc().format()).toISOString();
+} else{
+    data_handle.tipo.status_ap___token = 'TT___INCOMPLETE';
+    data_handle.tipo.status_ap = (tipoHandle.user_meta.user_attributes.user.locale === 'en') ? 'Incomplete' : 'Ατελής';
+    data_handle.formControl.get('status_ap___token').setValue('TT___INCOMPLETE');
+    data_handle.formControl.get('status_ap').setValue('Incomplete');
+}
+}
+
+ tipoCustomScript.ActionPlan_review_OnChange  = function(data_handle) {
+if(data_handle.tipo.review) {
+    let currentdate = new Date();
+    currentdate.setDate(currentdate.getDate() + 28);
+    let newdate = currentdate.toISOString()
+    data_handle.tipo.review_date = newdate;
+    data_handle.formControl.get('review_date').setValue(newdate);
+}
+}
+
+ tipoCustomScript.ActionPlan_action_reviewer_OnChange  = function(data_handle) {
+console.log('Action Reviewer')
+}
+
+ tipoCustomScript.ActionPlan_OnList  = function(data_handle) {
+if (tipoHandle.tipoInternalHandleService.isOnline) {
+    let page = tipoHandle.tipoInternalHandleService.getCurrentState().params && tipoHandle.tipoInternalHandleService.getCurrentState().params.page;
+    let filter_str = tipoHandle.tipoInternalHandleService.getCurrentState().url_filter;
+        let update_str = filter_str.replace('Task', 'TT___TASK').replace('Εργο', 'TT___TASK').replace('Fixed in Field', 'TT___FIXED_IN_FIELD').replace('Fixed In Field', 'TT___FIXED_IN_FIELD').replace('Διορθώθηκε στο πεδίο', 'TT___FIXED_IN_FIELD').replace('Complete', 'TT___COMPLETE').replace('Πλήρης', 'TT___COMPLETE').replace('Incomplete', 'TT___INCOMPLETE').replace('Ατελής', 'TT___INCOMPLETE').replace('Urgent', 'TT___URGENT').replace('Επείγων', 'TT___URGENT').replace('Medium', 'TT___MEDIUM').replace('Μεσαίο', 'TT___MEDIUM').replace('High', 'TT___HIGH').replace('Υψηλός', 'TT___HIGH').replace('Low', 'TT___LOW').replace('Χαμηλός', 'TT___LOW').replace('Behavioural', 'TT___BEHAVIOURAL').replace('Συμπεριφορικός', 'TT___BEHAVIOURAL').replace('System or Process', 'TT___SYSTEM_OR_PROCESS').replace('Σύστημα ή διαδικασία', 'TT___SYSTEM_OR_PROCESS').replace('Plant or Equipment', 'TT___PLANT_OR_EQUIPMENT').replace('Εργοστάσιο ή εξοπλισμός', 'TT___PLANT_OR_EQUIPMENT');
+        console.log(filter_str, update_str);
+        tipoHandle.routeTo('/tipo/ActionPlan', { filter: update_str, menu_filter: tipoHandle.tipoInternalHandleService.getCurrentState().url_menu_filter, page: page }, false, true);
+}
+}
+
+ tipoCustomScript.ActionPlan_OnView  = function(data_handle) {
+if (data_handle.mode === 'create') {
+    tipoHandle.getTipoParentContext();
+    console.log('##Parent##', tipoHandle.getTipoParentContext().value)
+    console.log(data_handle)
+    data_handle.tipo.geo_locn = tipoHandle.getTipoParentContext().value.tipo.geo_locn;
+    // data_handle.tipo.geo_locn_locn = {
+    //     'lat' : tipoHandle.getTipoParentContext().value.tipo.geo_locn_location.lat,
+    //     'lon' : tipoHandle.getTipoParentContext().value.tipo.geo_locn_location.lon
+    // }
+    data_handle.tipo.geo_locn_locn = tipoHandle.getTipoParentContext().value.tipo.geo_locn_location;
+    data_handle.tipo.structure_level_1_labels = tipoHandle.getTipoParentContext().value.tipo.structure_level_1_labels;
+    data_handle.tipo.company_labels = tipoHandle.getTipoParentContext().value.tipo.company_labels;
+    data_handle.tipo.contractor_company = tipoHandle.getTipoParentContext().value.tipo.contractor_company_labels;
+    
+}
+}
+
+ tipoCustomScript.ActionPlan_OnSave  = function(data_handle) {
+if(data_handle.formControl && !data_handle.formControl.valid) {
+    return;
+}
+if (data_handle.mode === 'create') {
+    if (data_handle.tipo.action_class___token === 'TT___FIXED_IN_FIELD') {
+        const now = new Date(tipoHandle.getDateUtil().utc().format()).toISOString();
+        const time = tipoHandle.getDateUtil().utc().format('HH.mm.sss');
+        const timearray = time.split('.');
+        const dtnumber = (+timearray[0] * 3600) + (+timearray[1] * 60);
+        data_handle.tipo.ap_start_date = now;
+        data_handle.tipo.ap_start_date_dtnumber = dtnumber;
+        data_handle.tipo.end_date = now;
+        data_handle.tipo.end_date_dtnumber = dtnumber;
+        data_handle.tipo.complete_date = now;
+        data_handle.tipo.complete_date_dtnumber = dtnumber;
+    }
+       tipoHandle.getTipo(data_handle.tipo.parent_tipo_name, data_handle.tipo.parent_tipo_id, {}).then((res) => {
+        data_handle.tipo.site_labels = res.site_labels;
+        data_handle.tipo.company_labels = res.company_labels;
+        data_handle.tipo.client_labels = res.client_labels;
+        data_handle.tipo.forwood_level_labels = res.forwood_level_labels;
+        data_handle.tipo.physical_loc_labels = res.physical_loc_labels;
+        data_handle.tipo.action_plan_locn = res.where_incidentlocn;
+        data_handle.tipo.hierarchy_key = res.hierarchy_key;
+        return false;
+})
+ }
+}
+
+ tipoCustomScript.ActionPlan_PostServerSave  = function(data_handle) {
+let completeAction = true;
+let datahandle_val = data_handle.tipo;
+let datahandle_response = data_handle.response
+let user_locale = tipoHandle.user_meta.user_attributes.user.locale
+if (data_handle.formControl && !data_handle.formControl.valid) {
+    return;
+}
+tipoHandle.tipoInternalHandleService.tipoDataService.getTipo('ActionPlan', datahandle_val.tipo_id, {}).subscribe()
+
+if (!datahandle_val.completeactionbuttonclick) {
+    const domain = window.localStorage.getItem('server_url') ? window.localStorage.getItem('server_url') : window.location.origin + '/';
+    const ACTION_LINK = domain + '#/tipo/ActionPlan/' + datahandle_val.tipo_id;
+    const link_url = `<a href="` + ACTION_LINK + `" target="_blank" rel="noopener noreferrer" data-auth="NotApplicable" data-linkindex="5">`
+    const APP_LINK = domain + '#/login';
+    const dt = datahandle_val.end_date;
+    const Date = dt ? tipoHandle.getDateUtil(dt).toString() : '';
+    if (datahandle_val.status_ap___token === 'TT___INCOMPLETE') {
+        var user_filter;
+        var userLang;
+        var framed_template;
+        var templateName;
+        //Notification on create of action plan
+        if (datahandle_response.created_by) {
+            user_filter = `(email.keyword:${datahandle_response.created_by})`;
+            framed_template = 'creatoremail';
+            var created_user = datahandle_response.created_by;
+            sendApEmail(user_filter, framed_template, created_user)
+        }
+
+        //Notification for Reviewer of action plan
+        if (datahandle_val.review && datahandle_val.action_reviewer) {
+            user_filter = `(email.keyword:${datahandle_val.action_reviewer})`
+            framed_template = 'revieweremail';
+            var reviewer_user = datahandle_val.action_reviewer
+            sendApEmail(user_filter, framed_template, reviewer_user)
+
+        }
+
+        // Notification for responsible person
+        if (datahandle_val.notify_responsible_person && datahandle_val.responsible_person_) {
+            user_filter = `(email.keyword:${datahandle_val.responsible_person_})`;
+            framed_template = 'responsibleemail';
+            var responsible_user = datahandle_val.responsible_person_
+            sendApEmail(user_filter, framed_template, responsible_user)
+        }
+
+        function sendApEmail(userfilter, templateString, userval) {
+            templateName = templateString;
+            tipoHandle.getTipos('TipoFIDUser', { tipo_filter: userfilter }, true).then((res) => {
+                userLang = res[0].locale;
+                console.log("forwoodUuid", userLang);
+                tipoHandle.getTipo('EmailTemplates', userLang, {}).then((response) => {
+                    let emailsubject, emailbody;
+                    var ActionClass, ActionType;
+                    let htmlbody = new DOMParser().parseFromString(response.templateName.template.emailbody, 'text/html').body.innerHTML;;
+                    let emailbodydata_converted = htmlbody.replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+                    var compiled_body = _.template(emailbodydata_converted);
+                    if (response.tipo_id != user_locale) {
+                        let translation_filter = `(parent_tipo_id:${datahandle_val.action_class___token} OR ${datahandle_val.action_plan_type___token}) AND (language:${response.tipo_id})`;
+                        tipoHandle.getTipos('TipoSSTranslations', { tipo_filter: translation_filter }, true).then((transval) => {
+                            console.log("transval", transval);
+                            ActionClass = _.find(transval, ['parent_tipo_id', datahandle_val.action_class___token]).translation_value;
+                            ActionType = _.find(transval, ['parent_tipo_id', datahandle_val.action_plan_type___token]).translation_value;
+                            let emailbody_parsed = compiled_body({
+                                'identifier': datahandle_val.tipo_id,
+                                'actioncategory': ActionClass,
+                                'actiontype': ActionType,
+                                'activity': datahandle_val.action_activity,
+                                'duedate': Date,
+                                'actionlink': link_url,
+                                'actionlinkend': '</a>'
+                            });
+                            emailbody = emailbody_parsed.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+                            let htmlsubject = new DOMParser().parseFromString(response.templateName.template.emailsubject, 'text/html');
+                            let subjectParsed = htmlsubject.body.textContent;
+                            var compiled_sub = _.template(subjectParsed);
+                            emailsubject = compiled_sub();
+                            sendEmail([userval], emailsubject, `${htmlencode(emailbody)}`);
+                        })
+
+                    }
+                    else {
+                        ActionClass = datahandle_val.action_class;
+                        ActionType = datahandle_val.action_plan_type;
+
+                        let emailbody_parsed = compiled_body({
+                            'identifier': datahandle_val.tipo_id,
+                            'actioncategory': ActionClass,
+                            'actiontype': ActionType,
+                            'activity': datahandle_val.action_activity,
+                            'duedate': Date,
+                            'actionlink': link_url,
+                            'actionlinkend': '</a>'
+                        });
+                        emailbody = emailbody_parsed.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+                        let htmlsubject = new DOMParser().parseFromString(response.templateName.template.emailsubject, 'text/html');
+                        let subjectParsed = htmlsubject.body.textContent;
+                        var compiled_sub = _.template(subjectParsed);
+                        emailsubject = compiled_sub();
+                        sendEmail([userval], emailsubject, `${htmlencode(emailbody)}`);
+                    }
+
+
+                })
+            })
+        }
+
+    }
+}
+
+    if (datahandle_val.completeactionbuttonclick) {
+        let datahandle_completeAction = data_handle.tipo;
+        console.log('complete action notification triggered');
+        // Notification complete action
+        const domain = window.localStorage.getItem('server_url') ? window.localStorage.getItem('server_url') : window.location.origin + '/';
+        const ACTION_LINK = domain + '#/tipo/ActionPlan/' + datahandle_completeAction.tipo_id;
+        const APP_LINK = domain + '#/login';
+        const link_url = `<a href="` + ACTION_LINK + `" target="_blank" rel="noopener noreferrer" data-auth="NotApplicable" data-linkindex="5">`
+        let complete_dt = datahandle_completeAction.complete_date;
+        const CDate = complete_dt ? tipoHandle.getDateUtil(complete_dt).toString() : '';
+        let end_date = datahandle_completeAction.end_date;
+        const EDate = end_date ? tipoHandle.getDateUtil(end_date).toString() : '';
+        if (datahandle_completeAction.action_class___token == 'TT___TASK' && datahandle_completeAction.status_ap___token === 'TT___COMPLETE' && !(datahandle_completeAction.ActionCompletedEmailSent)) {
+
+            let users;
+            if (datahandle_completeAction.notify_responsible_person && datahandle_completeAction.review) {
+                users = _.uniq([datahandle_completeAction.responsible_person_, datahandle_completeAction.action_reviewer, datahandle_response.created_by])
+            }
+            else if (datahandle_completeAction.notify_responsible_person) {
+                users = _.uniq([datahandle_completeAction.responsible_person_, datahandle_response.created_by]);
+            }
+            else if (datahandle_completeAction.review) {
+                users = _.uniq([datahandle_completeAction.action_reviewer, datahandle_response.created_by]);
+            }
+            else {
+                users = _.uniq([datahandle_response.created_by]);
+            }
+            if (completeAction) {
+                let user_array = _.map(users, (useremail) => { return '(email.keyword: ' + useremail + ')' });
+                let user_filter = `(${user_array.join(' OR ')})`
+                tipoHandle.getTipos('TipoFIDUser', { tipo_filter: user_filter }, true).then((res) => {
+                    var userln = _.map(res, (list) => {
+                        return {
+                            'email': list.email,
+                            'ln': list.locale
+                        }
+                    })
+                    var userLang = `(tipo_id.keyword:${_.map(userln, 'ln').join(' OR ')})`;
+                    console.log("forwoodUuid", userLang);
+                    tipoHandle.getTipos('EmailTemplates', { tipo_filter: userLang }, true).then((response) => {
+                        console.log("Email template", response)
+                        _.forEach(_.map(userln, 'email'), function (value) {
+                            console.log(value);
+                            var user_ln = _.filter(userln, ['email', value]);
+                            var response_filter = _.filter(response, ['tipo_id', user_ln[0].ln]);
+                            let emailsubject, emailbody;
+                            var ActionClass, ActionType;
+                            let htmlbody = new DOMParser().parseFromString(response_filter[0].completeactionemail.template.emailbody, 'text/html');
+                            let emailbodydata = htmlbody.body.innerHTML;
+                            let emailbodydata_converted = emailbodydata.replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+                            var compiled_body = _.template(emailbodydata_converted);
+                            if (user_ln[0].ln != user_locale) {
+                                let translation_filter = `(parent_tipo_id:${datahandle_completeAction.action_class___token} OR ${datahandle_completeAction.action_plan_type___token}) AND (language:${user_ln[0].ln})`
+                                tipoHandle.getTipos('TipoSSTranslations', { tipo_filter: translation_filter }, true).then((transval) => {
+                                    console.log("transval", transval);
+                                    ActionClass = _.find(transval, ['parent_tipo_id', datahandle_completeAction.action_class___token]).translation_value;
+                                    ActionType = _.find(transval, ['parent_tipo_id', datahandle_completeAction.action_plan_type___token]).translation_value;
+                                    let emailbody_parsed = compiled_body({
+                                        'identifier': datahandle_completeAction.tipo_id,
+                                        'actioncategory': ActionClass,
+                                        'actiontype': ActionType,
+                                        'activity': datahandle_completeAction.action_activity,
+                                        'duedate': EDate,
+                                        'actionlink': link_url,
+                                        'actionlinkend': '</a>'
+                                    });
+                                    emailbody = emailbody_parsed.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+                                    let htmlsubject = new DOMParser().parseFromString(response_filter[0].completeactionemail.template.emailsubject, 'text/html');
+                                    let subjectParsed = htmlsubject.body.textContent;
+                                    var compiled_sub = _.template(subjectParsed);
+                                    emailsubject = compiled_sub();
+                                    sendEmail([value], emailsubject, `${htmlencode(emailbody)}`);
+                                })
+                            }
+                            else {
+                                ActionClass = datahandle_completeAction.action_class;
+                                ActionType = datahandle_completeAction.action_plan_type;
+                                let emailbody_parsed = compiled_body({
+                                    'identifier': datahandle_completeAction.tipo_id,
+                                    'actioncategory': ActionClass,
+                                    'actiontype': ActionType,
+                                    'activity': datahandle_completeAction.action_activity,
+                                    'duedate': EDate,
+                                    'actionlink': link_url,
+                                    'actionlinkend': '</a>'
+                                });
+                                emailbody = emailbody_parsed.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+                                let htmlsubject = new DOMParser().parseFromString(response_filter[0].completeactionemail.template.emailsubject, 'text/html');
+                                let subjectParsed = htmlsubject.body.textContent;
+                                var compiled_sub = _.template(subjectParsed);
+                                emailsubject = compiled_sub();
+                                sendEmail([value], emailsubject, `${htmlencode(emailbody)}`);
+                            }
+
+
+                        });
+                    })
+                })
+            }
+            completeAction = false;
+            datahandle_completeAction.ActionCompletedEmailSent = true;
+            tipoHandle.updateTipo('ActionPlan', datahandle_completeAction.tipo_id, datahandle_completeAction).then((result) => {
+                console.log("data_handle", datahandle_completeAction)
+
+            })
+        }
+    }
+    function htmlencode(str) {
+        let escape_encoder = /<[^<>]+>|./g
+        return str.replace(escape_encoder, function (r) {
+            return r[0] == '<' ? r : r[0] == '$' ? '' : "&#" + r[0].charCodeAt() + ";"
+        });
+    }
+
+    function sendEmail(users, subject, body) {
+        console.log(users, subject, body);
+        const recipents_limit = 50;
+        var a = _.uniq(users);
+        while (a.length) {
+            let recipents = a.splice(0, recipents_limit);
+            console.log(recipents.toString());
+            tipoHandle.sendEmail(recipents.toString(), subject, body);
+        }
+    }
+return true;
+}
+
+ tipoCustomScript.ActionPlan_list_export_data = function(data_handle) {
+tipoHandle.presentTipoForm('Export data', 'TipoExportDataPlugin', 'view', { tipo: data_handle, hide_actions: true, ___hide_done_action___: true, tipo_handle: this.tipo_handle }, [], false, this.tipoHandleService);
+return true;
+}
+
+
+ tipoCustomScript.ActionPlan_list_bulk_delete = function(data_handle) {
+var count = 0;
+_.forEach(data_handle.selected_tipos, function(each, index){
+    tipoHandle.deleteTipo('CVRMSActionPlan', each.tipo_id).then(function() {
+        count++;
+        if(data_handle.selected_tipos.length == count) {
+            tipoHandle.showMessage('Delete complete successfully');
+            tipoHandle.toTipo('list','CVRMSActionPlan');
+        }
+    });
+
+});
+}
+
+
+//___ActionPlan___
+//___LandingPage___
+
+ tipoCustomScript.LandingPage_contact_support = function(data_handle) {
+tipoHandle.presentTipoForm("ContactSupport", "ContactSupport","create", { tipo: {}, hide_actions: true }, []).then(function(result){
+    if(result && result.subject && result.body){
+        
+    // Success function
+    let subject = result.subject;
+    let body =  `<div>${result.body} <br><br>
+                <b style="font-size: 16px;">Login User's Details: </b> <br>
+                Name: ${tipoHandle.user_meta.name}<br>
+                Email ID :${tipoHandle.user_meta.email} <br>
+                Role: ${tipoHandle.user_meta.role}  <br> 
+                Current URL: ${window.location.href}<br>
+                Browser Configuration: ${navigator.appVersion}<br><br><br>
+                <i>Kind Regards, <br>
+                Forwood Safety Team</i>
+                </div>`;
+        let users = ['support@forwoodsafety.com'];
+        tipoHandle.sendEmail(users.toString(), subject, body);
+    }
+})
+    
+return true;
+}
+
+
+ tipoCustomScript.LandingPage_download_app = function(data_handle) {
+var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+if (/Mac|iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+    window.open('https://apps.apple.com/in/app/safetyapps/id1441083752','_blank');
+}
+else {
+    window.open('https://play.google.com/store/apps/details?id=com.forwoodsafety.safetyapps','_blank');
+}
+return true;
+}
+
+
+ tipoCustomScript.LandingPage_training_videos = function(data_handle) {
+tipoHandle.routeTo(`tipo/TrainingMaterial/8434345600`,{perspective:`Settings`});
+return true;
+}
+
+//___LandingPage___
 
  
  //END_OF_CUSTOM_SERVICE 
